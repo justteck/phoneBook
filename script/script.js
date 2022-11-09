@@ -187,8 +187,8 @@ const data = [
 
     header.headerContainer.append(logo);
     main.mainContainer.
-        append(btnsGroup.btnWrapper, table, form.overlay, footer);
-    app.append(header, main);
+        append(btnsGroup.btnWrapper, table, form.overlay);
+    app.append(header, main, footer);
 
     return {
       list: table.tbody,
