@@ -104,6 +104,7 @@ const data = [
         <td>Имя</td>
         <td>Фамилия</td>
         <td>Телефон</td>
+        <td></td>
       </tr>
     `);
     const tbody = document.createElement('tbody');
@@ -220,8 +221,14 @@ const data = [
     phoneLink.textContent = phone;
     tdPhone.append(phoneLink);
 
+    const tdEdit = document.createElement('td');
+    const btnEdit = document.createElement('button');
+    btnEdit.classList.add('edit');
+    btnEdit.type = 'button';
+    tdEdit.append(btnEdit);
+
     tr.phoneLink = phoneLink;
-    tr.append(tdDel, tdName, tdSurname, tdPhone);
+    tr.append(tdDel, tdName, tdSurname, tdPhone, tdEdit);
 
     return tr;
   };
