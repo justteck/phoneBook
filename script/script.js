@@ -81,6 +81,7 @@ const data = [
       button.type = type;
       button.textContent = text;
       button.className = className;
+      button.style.marginRight = '10px';
 
       return button;
     });
@@ -101,8 +102,8 @@ const data = [
     thead.insertAdjacentHTML('afterbegin', `
       <tr>
         <td class="delete"></td>
-        <td>Имя</td>
-        <td>Фамилия</td>
+        <td data="forsort">Имя</td>
+        <td data="forsort">Фамилия</td>
         <td>Телефон</td>
         <td></td>
       </tr>
@@ -195,6 +196,7 @@ const data = [
       list: table.tbody,
       logo,
       btnAdd: btnsGroup.buttons[0],
+      btnDel: btnsGroup.buttons[1],
       formOverlay: form.overlay,
       form: form.form,
     };
@@ -202,6 +204,7 @@ const data = [
 
   const createRow = ({name: firstName, surname, phone}) => {
     const tr = document.createElement('tr');
+    tr.classList.add('contact');
 
     const tdDel = document.createElement('td');
     tdDel.classList.add('delete');
@@ -253,11 +256,25 @@ const data = [
     });
   };
 
+  const sortBy = (contacts, columnForSort) => {
+    const sortedContacts = contacts.sort((a, b) =>
+      a.children[columnForSort].textContent.
+          localeCompare(b.children[columnForSort].textContent));
+
+    return sortedContacts;
+  };
+
   const init = (selectorApp, title) => {
     const app = document.querySelector(selectorApp);
     const phoneBook = renderPhoneBook(app, title);
 
-    const {list, logo, btnAdd, formOverlay, form} = phoneBook;
+    const {
+      list,
+      logo,
+      btnAdd,
+      formOverlay,
+      btnDel,
+    } = phoneBook;
 
     // Функционал
     const allRows = renderContacts(list, data);
@@ -266,11 +283,37 @@ const data = [
     btnAdd.addEventListener('click', () =>
       formOverlay.classList.add('is-visible'));
 
-    form.addEventListener('click', event => event.stopPropagation());
+    formOverlay.addEventListener('click', e => {
+      const target = e.target;
 
-    formOverlay.addEventListener('click', () =>
-      formOverlay.classList.remove('is-visible'));
+      if (target.matches('.close') || target.matches('.form-overlay')) {
+        formOverlay.classList.remove('is-visible');
+      }
+    });
+
+    btnDel.addEventListener('click', () => {
+      document.querySelectorAll('.delete').forEach(del => {
+        del.classList.toggle('is-visible');
+      });
+    });
+
+    list.addEventListener('click', e => {
+      const target = e.target;
+
+      if (target.matches('.del-icon')) {
+        target.closest('.contact').remove();
+      }
+    });
+
+    document.querySelector('thead').addEventListener('click', (e) => {
+      const target = e.target;
+      const columnIndex = e.target.cellIndex;
+
+      if (target.matches('td[data=forsort]')) {
+        const sortedContacts = sortBy(allRows, columnIndex);
+        list.append(...sortedContacts);
+      }
+    });
   };
-
   window.phoneBookInit = init;
 }
