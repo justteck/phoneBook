@@ -1,34 +1,7 @@
 'use strict';
 
-const data = [
-  {
-    name: 'Иван',
-    surname: 'Петров',
-    phone: '+79514545454',
-  },
-  {
-    name: 'Игорь',
-    surname: 'Семёнов',
-    phone: '+79999999999',
-  },
-  {
-    name: 'Семён',
-    surname: 'Иванов',
-    phone: '+79800252525',
-  },
-  {
-    name: 'Мария',
-    surname: 'Попова',
-    phone: '+79876543210',
-  },
-];
-
 {
-  const addContactData = (contact) => {
-    data.push(contact);
-    console.log(data);
-  };
-
+  // Create HTML
   const createContainer = () => {
     const container = document.createElement('div');
     container.classList.add('container');
@@ -171,6 +144,81 @@ const data = [
     };
   };
 
+  // Funcs
+  // Hover a line of contacts ----
+  const hoverRow = (allRows, logo) => {
+    const logoText = logo.textContent;
+
+    allRows.forEach(contact => {
+      contact.addEventListener('mouseenter', () => {
+        logo.textContent = contact.phoneLink.textContent;
+      });
+      contact.addEventListener('mouseleave', () => {
+        logo.textContent = logoText;
+      });
+    });
+  };
+
+  // Local Storage ---------------
+  const getStorage = (key) => {
+    const contacts = JSON.parse(localStorage.getItem(key)) || [];
+    // console.log('CURR STORAGE: ',
+    //   Array.isArray(contacts) ? contacts : [contacts]);
+    return Array.isArray(contacts) ? contacts : [contacts];
+  };
+
+  const setStorage = (key, contact) => {
+    const contacts = getStorage(key);
+
+    contacts.push(contact);
+    localStorage.setItem(key, JSON.stringify(contacts));
+  };
+
+  const removeStorage = (key, phoneNumber) => {
+    const contactsInStorage = getStorage(key);
+
+    const indexToDelete = contactsInStorage.
+        findIndex(contact => contact.phone === String(phoneNumber));
+    contactsInStorage.splice(indexToDelete, 1);
+
+    localStorage.setItem(key, JSON.stringify(contactsInStorage));
+  };
+
+  // Sort -------------------------
+  const sortBy = (contacts, columnForSort) => {
+    const sortedContacts = contacts.sort((a, b) =>
+      a.children[columnForSort].textContent.
+          localeCompare(b.children[columnForSort].textContent));
+
+    return sortedContacts;
+  };
+
+  const sortContacts = (list, allRows) => {
+    const sort = (index) => {
+      const sortedContacts = sortBy(allRows, index);
+      list.innerHTML = '';
+      list.append(...sortedContacts);
+    };
+
+    const defaultSort = +localStorage.getItem('sortBy');
+
+    if (defaultSort) {
+      sort(defaultSort);
+    }
+
+    document.querySelector('thead').addEventListener('click', (e) => {
+      const target = e.target;
+      const columnIndex = e.target.cellIndex;
+
+      localStorage.setItem('sortBy', columnIndex);
+
+      if (target.matches('td[data=forsort]')) {
+        sort(columnIndex);
+      }
+    });
+  };
+
+  // Render data ------------------
   const renderPhoneBook = (app, title) => {
     const header = createHeader();
     const logo = createLogo(title);
@@ -241,34 +289,26 @@ const data = [
     return tr;
   };
 
-  const renderContacts = (elem, data) => {
-    const allRows = data.map(createRow);
-    elem.append(...allRows);
+  const renderContacts = (list) => {
+    const allRows = getStorage('contacts').map(createRow);
+    list.innerHTML = '';
+    list.append(...allRows);
 
     return allRows;
   };
 
-  const hoverRow = (allRows, logo) => {
-    const logoText = logo.textContent;
-
-    allRows.forEach(contact => {
-      contact.addEventListener('mouseenter', () => {
-        logo.textContent = contact.phoneLink.textContent;
-      });
-      contact.addEventListener('mouseleave', () => {
-        logo.textContent = logoText;
-      });
-    });
+  // Update ------------------------
+  const updatePageData = (list) => {
+    const allRows = renderContacts(list);
+    sortContacts(list, allRows);
   };
 
-  const sortBy = (contacts, columnForSort) => {
-    const sortedContacts = contacts.sort((a, b) =>
-      a.children[columnForSort].textContent.
-          localeCompare(b.children[columnForSort].textContent));
+  // Check if same number
+  const isDuplicateNumber = (newContact) =>
+    getStorage('contacts').find(contact =>
+      contact.phone === newContact.phone);
 
-    return sortedContacts;
-  };
-
+  // Control ------------------------
   const modalControl = (btnAdd, formOverlay) => {
     const openModal = () => {
       formOverlay.classList.add('is-visible');
@@ -293,47 +333,42 @@ const data = [
     };
   };
 
-  const deleteControl = (btnDel, list) => {
-    btnDel.addEventListener('click', () => {
+  const deleteControl = (btnDel, list, logo) => {
+    const toggleDeleteButton = () => {
       document.querySelectorAll('.delete').forEach(del => {
         del.classList.toggle('is-visible');
       });
-    });
+    };
+
+    btnDel.addEventListener('click', toggleDeleteButton);
 
     list.addEventListener('click', e => {
       const target = e.target;
 
       if (target.matches('.del-icon')) {
-        target.closest('.contact').remove();
+        const contactToDelete = target.closest('.contact');
+        const contactToDeletePhoneNumber =
+          contactToDelete.querySelector('a').textContent;
+        removeStorage('contacts', contactToDeletePhoneNumber);
+        toggleDeleteButton();
+        updatePageData(list, logo);
       }
     });
   };
 
-  const sortContacts = (list, allRows) => {
-    document.querySelector('thead').addEventListener('click', (e) => {
-      const target = e.target;
-      const columnIndex = e.target.cellIndex;
-
-      if (target.matches('td[data=forsort]')) {
-        const sortedContacts = sortBy(allRows, columnIndex);
-        list.append(...sortedContacts);
-      }
-    });
-  };
-
-  const addContactPage = (contact, list) => {
-    list.append(createRow(contact));
-  };
-
-  const formControl = (form, list, closeModal) => {
+  const formControl = (form, list, closeModal, logo) => {
     form.addEventListener('submit', e => {
       e.preventDefault();
       const formData = new FormData(e.target);
 
       const newContact = Object.fromEntries(formData);
 
-      addContactData(newContact);
-      addContactPage(newContact, list);
+      if (!isDuplicateNumber(newContact)) {
+        setStorage('contacts', newContact);
+        updatePageData(list, logo);
+      } else {
+        alert('Контакт с таким номером уже существует!');
+      }
       form.reset();
       closeModal();
     });
@@ -352,13 +387,13 @@ const data = [
     } = renderPhoneBook(app, title);
 
     // Функционал
-    const allRows = renderContacts(list, data);
+    const allRows = renderContacts(list);
     const {closeModal} = modalControl(btnAdd, formOverlay);
 
     hoverRow(allRows, logo);
     deleteControl(btnDel, list);
-    sortContacts(list, allRows);
     formControl(form, list, closeModal);
+    sortContacts(list, allRows);
   };
   window.phoneBookInit = init;
 }
