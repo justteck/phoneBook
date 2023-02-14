@@ -1,14 +1,17 @@
-import renderPage from './modules/renderPage.js';
+import renderPage from './script/renderPage';
 const {
   renderPhoneBook,
   renderContacts,
 } = renderPage;
 
-import {hoverRow} from './modules/hoverContacts.js';
+import {hoverRow} from './script/hoverContacts';
 
-import {sortContacts} from './modules/sortContacts.js';
+import {sortContacts} from './script/sortContacts';
 
-import * as control from './modules/control.js';
+import * as control from './script/control';
+
+import './index.html';
+import './scss/index.scss';
 
 const init = (selectorApp, title) => {
   const app = document.querySelector(selectorApp);

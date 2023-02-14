@@ -1,13 +1,13 @@
-import {sortContacts} from './sortContacts.js';
+import {sortContacts} from './sortContacts';
 
-import serviceStorage from './serviceStorage.js';
+import serviceStorage from './serviceStorage';
 const {
   getStorage,
   setStorage,
   removeStorage,
 } = serviceStorage;
 
-import renderPage from './renderPage.js';
+import renderPage from './renderPage';
 const {renderContacts} = renderPage;
 
 
